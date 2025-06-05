@@ -1,10 +1,3 @@
-//
-//  main.c
-//  CLI-Emulator
-//
-//  Created by PRINCE  on 6/5/25.
-//
-
 #include <stdio.h>
 
 int main(int argc, const char * argv[]) {
