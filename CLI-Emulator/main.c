@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 
 // reg will contain the value of the sixteen registers r0 - r15
 int reg[16];
@@ -92,3 +93,103 @@ int main(int argc, const char * argv[]) {
     printf("Hello, World!\n");
     return 0;
 }
+
+int dec(char ch)
+{
+    switch(ch)
+    {
+        case '0': return 0;
+                   break;
+        case '1': return 1;
+                   break;
+        case '2': return 2;
+                   break;
+        case '3': return 3;
+                   break;
+        case '4': return 4;
+                   break;
+        case '5': return 5;
+                   break;
+        case '6': return 6;
+                   break;
+        case '7': return 7;
+                   break;
+        case '8': return 8;
+                   break;
+        case '9': return 9;
+                   break;
+        case 'a':
+        case 'A': return 10;
+                   break;
+        case 'b':
+        case 'B': return 11;
+                   break;
+        case 'c':
+        case 'C': return 12;
+                   break;
+        case 'd':
+        case 'D': return 13;
+                   break;
+        case 'e':
+        case 'E': return 14;
+                   break;
+        case 'f':
+        case 'F': return 15;
+                   break;
+    }
+    invalidInst();
+    assert(0);
+    return -1;
+}
+
+void setPcForMain(void)
+{
+    int lab_c = 0;
+    int i, j;
+    while(lab_c < lab_count)
+    {
+        i = labels[lab_c].i;
+        j = labels[lab_c].j;
+        if(j-i == 5)
+        {
+            if(strncmp(&str[i],".main",5) == 0)
+            {
+                pc = labels[lab_c].inst_no;
+                return;
+            }
+        }
+        lab_c++;
+    }
+    printf("There is no .main label in the program !!!\n");
+    exit(0);
+}
+
+int getPcForLabel(char* str, int i, int j)
+{
+    int lab_c = 0;
+    int li, lj;
+    // Search for that label which has the same name as the label in the instruction
+    while(lab_c < lab_count)
+    {
+        li = labels[lab_c].i;
+        lj = labels[lab_c].j;
+        if((j-i) == (lj-li))
+        {
+            if(strncmp(&str[i],&str[li],j-i) == 0)
+                return labels[lab_c].inst_no;
+        }
+        lab_c++;
+    }
+    printf("The label does not exist !!!\n");
+    invalidInst();
+    assert(0);
+    return -1;
+}
+
+
+void invalidInst(void)
+{
+    printf("The instruction in line number %d is INVALID.\n", k);
+    exit(0);    // EXIT the interpreter
+}
+
