@@ -733,6 +733,253 @@ void getReg2Add(char* inst, int i){
 }
 
 
+
+void getLdSt(char* inst, int i) { // instruction is of the form rd, imm[rs1]
+   
+    // Code to extract rd registor number
+    
+    while(inst[i] == ' ' || inst[i] == '\t') {
+        i++;
+    }
+    
+    if(inst[i] == 's') {
+        i++;
+        
+        if(inst[i+1] == 'p') {
+            rd = 14;
+            i++;
+        }else {
+            invalidInst();
+        }
+        
+    }else if ( inst[i] == 'r') {
+        i++;
+        if( inst[i] == 'a') {
+            rd = 15;
+            i++;
+        }else if ( isdigit(inst[i])) {
+            rd = inst[i] - '0';
+            i++;
+            if(isdigit(inst[i])) {
+                rd = ((rd *10) + (inst[i] - '0' ));
+                i++;
+            }
+            
+            if(rd <0 || rd > 15 ) {
+                invalidInst();
+            }
+        }else {
+            invalidInst();
+        }
+    }else {
+        invalidInst();
+    }
+    
+    
+     // Code to extract registor number of immediate
+    
+    // Code to extract imm
+    
+    
+    while(inst[i] == ' ' || inst[i] == '\t') {
+        i++;
+    }
+    
+    if(inst[i] != ','){
+        invalidInst();
+    }
+    i++;
+    
+    while(inst[i] == ' ' || inst[i] == '\t') {
+        i++;
+    }
+    
+    if( inst[i] == '['){// if we are using just registor indirect mode of addressing
+        
+        imm =0;
+        
+    } else if (inst[i] == '0' && inst[i+1] == 'x'){ // It is a immediate in hexadeximal format
+        i+=2;
+        // We can have 16 bits signed immediate
+        // Hence we will only have upto 4 places in hex format as each digit can be written in 4 bits in binary
+        
+        while(inst[i] == ' ' || inst[i] == '\t') {
+            i++;
+        }
+        
+        if(inst[i] == '[' || inst[i] == '\0') {
+            invalidInst();
+        }
+        
+        int hexIndex = 0;
+        
+        while(inst[i] != '[' && hexIndex < 4) {
+            
+            hexImm[hexIndex++] = dec(inst[i++]);
+            while(inst[i] == ' ' || inst[i] == '\t'){
+                i++;
+            }
+            
+        }
+        
+        if(inst[i] != '['){
+            invalidInst();
+        }
+        
+        imm = 0;
+        int q = 0;
+        while(q < hexIndex){
+            imm = 16*imm + hexImm[q++];
+        }
+        
+        if(hexIndex == 4) {
+            if(hexImm[0] >= 8)
+                
+                // we dont allow modifier in imm[rs1]
+                
+                // If m is not unsigned that is signed and if hexadecimal starts with 8 ( 4 word hex) then it is negative
+                imm -= 65536; // So we subtract 2^16 = 65536 from it to make it signed
+        }
+        
+        // we dont allow modifier in imm[rs1]
+        
+//        if(m == 2){
+//           // Because in C if we do << behaviour of signed number can change so it is not safe so we will do multiply
+//            imm *= 65536; // Multiplying with 2^16 is same as imm << 16
+//        }
+//        isImm = 1;
+    }else if (isdigit(inst[i])) { // Immediate is a positive number
+        imm = 0;
+        
+        while(isdigit(inst[i])) {
+            
+            imm = imm*10 + (inst[i] - '0');
+            i++;
+        }
+        
+        // We dont allow unsigned immediate in form imm[rs1]
+        
+//        if(imm > 65535){
+//            
+//            invalidInst();         // The immediate cannot be greater than 16 bits and largest 16 bit unsigned number is 0xFFFF = 65535
+//        }
+//        
+//        if(m == 0 || m == 2) {
+//            
+        if(imm > 32767){
+            
+            invalidInst();    //The largest positive number in 16 bit signed numbers is 0x7FFF = 32767 ( 2^15  -1  = 32768-1)
+        }
+//        }
+        
+//        if(m == 2) {
+//            
+//            imm *= 65536;
+//        }
+        
+//        isImm = 1;
+    }else if ( inst[i] == '-'){ // Immediate is a negative number
+        
+        i++;
+        
+        while( inst[i] == ' ' || inst[i] == '\t') {
+            i++;
+        }
+        
+        imm =0;
+        while(isdigit(inst[i])) {
+            
+            imm = imm *10 + ( inst[i] - '0' );
+            i++;
+        }
+        
+        imm*=-1;
+        
+        if(imm < -32768){
+            invalidInst(); // Largest negative number in 16 bit signed number is 32768
+        }
+        
+//        if(m==1){
+//            imm += 65536; // adding 2^16 to treat it as unsigned integer
+//        }
+       
+        
+//        if( m == 2 ) {
+//            
+//            imm *=65536;
+//        }
+//        
+//        isImm = 1;
+    }else {
+        invalidInst();
+    }
+    
+    
+    // Code to extract registor number of rs1
+    while(inst[i] == ' ' || inst[i] == '\t') {
+        i++;
+    }
+    if(inst[i] != '[') {
+        invalidInst();
+    }
+    i++;
+    
+    // Code to extract rs1 registor number
+     
+     
+    
+     while(inst[i] == ' ' || inst[i] == '\t') {
+         i++;
+     }
+      
+     if(inst[i] == 's') {
+         i++;
+         
+         if(inst[i+1] == 'p') {
+             rs1 = 14;
+             i++;
+         }else {
+             invalidInst();
+         }
+         
+     }else if ( inst[i] == 'r') {
+         i++;
+         if( inst[i] == 'a') {
+             rs1 = 15;
+             i++;
+         }else if ( isdigit(inst[i])) {
+             rs1 = inst[i] - '0';
+             i++;
+             if(isdigit(inst[i])) {
+                 rs1 = ((rs1 *10) + (inst[i] - '0' ));
+                 i++;
+             }
+             
+             if(rs1 <0 || rs1 > 15 ) {
+                 invalidInst();
+             }
+         }else {
+             invalidInst();
+         }
+     }else {
+         invalidInst();
+     }
+    
+    
+    while(inst[i] == ' ' || inst[i] == '\t') {
+        i++;
+    }
+     
+    if(inst[i] != ']') {
+        invalidInst();
+    }
+    
+    return;
+    
+}
+
+
+
 int dec(char ch)
 {
     switch(ch)
