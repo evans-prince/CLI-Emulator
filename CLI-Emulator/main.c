@@ -271,6 +271,414 @@ int main(int argc, const char * argv[])
     return 0;
 }
 
+void executeInstruction(void){
+    
+    int b = instructions[pc].i;        // b is the beginning of the instruction
+    int f = instructions[pc].j;        // f is the end of the instruction
+    while(str[b] == ' ' || str[b] == '\t'){
+        b++;
+    }
+    int u = b;
+    while(u < f){
+        
+        if(str[u] == '@') {   // Everything after @ will be a single line comment
+            
+            f = u;
+            break;
+        }
+        u++;
+    }
+    
+    if(b == f) {    // If this line is just a blank line or a comment and does not contain any instruction
+        
+        return;
+    }
+    
+    int l = f-b+1;
+    char inst[l];
+    memcpy(inst, &str[b], l-1);        // Copy the instructions into the string inst
+    inst[l-1] = '\0';
+    
+    int i = 0;
+    
+    switch (inst[i]) {
+        case 'a':
+            if(inst[i+2] == 'd'){
+                if(inst[i+1] == 'd') { // Code for " ADD "
+                    i = i +3;
+                    
+                    if(inst[i] == ' ' || inst[i] == '\t') { // add
+                        
+                        i++;
+                        m = 0;    // modifier is set to 0 (default)
+                        
+                        getReg3Add(inst, i);
+                        
+                        if(isImm){
+                            
+                            reg[rd] = reg[rs1] + imm;
+                        }else{
+                            
+                            reg[rd] = reg[rs1] + reg[rs2];
+                        }
+                    }else if (inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t')) { //addu
+                        
+                        i = i + 2;
+                        
+                        m = 1;    // modifier is set to 1 (unsigned)
+                        
+                        getReg3Add(inst, i);
+                        
+                        if(isImm){
+                            
+                            reg[rd] = reg[rs1] + imm;
+                        }
+                        else{
+                            
+                            invalidInst();    //addu and rs2 are incompatible
+                        }
+                    }else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t')) { //addh
+                    
+                        i = i + 2;
+                        
+                        m = 2;    // modifier is set to 2 (high)
+                        
+                        getReg3Add(inst, i);
+                        
+                        if(isImm){
+                            
+                            reg[rd] = reg[rs1] + imm;
+                        }
+                        else {
+                            
+                            invalidInst();    //addh and rs2 are incompatible
+                        }
+                    }else {
+                        
+                        invalidInst();
+                    }
+                }
+                
+                else if(inst[i+1] == 'n')    //AND
+                {
+                    i = i + 3;
+                    if(inst[i] == ' ' || inst[i] == '\t')  //and
+                    {
+                        ++i;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] & imm;
+                        else
+                            reg[rd] = reg[rs1] & reg[rs2];
+                    }
+
+                    else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //andu
+                    {
+                        i = i + 2;
+                        m = 1;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] & imm;
+                        else
+                            invalidInst();    //andu and rs2 are incompatible
+                    }
+
+                    else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //andh
+                    {
+                        i = i + 2;
+                        m = 2;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] & imm;
+                        else
+                            invalidInst();    //andh and rs2 are incompatible
+                    }
+                    else
+                        invalidInst();
+                }
+
+                else{
+                    invalidInst();
+                }
+            }
+            
+            else if(inst[i+1] == 's' && inst[i+2] == 'r' && (inst[i+3] == ' ' || inst[i+3] == '\t'))    //ASR
+            {
+                i = i + 4;
+                m = 0;
+                getReg3Add(inst, i);
+                if(isImm)
+                {
+                    if(imm < 0)
+                    {
+                        printf("Cannot perform arithmetic right shift by a negative number\n");
+                        invalidInst();
+                    }
+                    reg[rd] = reg[rs1] >> imm;
+                }
+                else
+                {
+                    if(reg[rs2] < 0)
+                    {
+                        printf("Cannot perform arithmetic right shift by a negative number\n");
+                        invalidInst();
+                    }
+                    reg[rd] = reg[rs1] >> reg[rs2];
+                }
+            }
+
+            else{
+                
+                invalidInst();
+            }
+            break;
+            
+        case 's':
+            if(inst[i+1] == 't' && (inst[i+2] == ' ' || inst[i+2] == '\t')){    // ST
+                    i += 3;
+                    getLdSt(inst, i);
+                    if((reg[rs1]+imm)%4 != 0)
+                    {
+                        printf("Cannot access a memory location which is not a multiple of 4 !!!\n");
+                        invalidInst();
+                    }
+                    Mem[(reg[rs1]+imm)/4] = reg[rd];
+                
+            }
+            else if(inst[i+1] == 'u' && inst[i+2] == 'b')     //SUB
+            {
+                i = i + 3;
+                if(inst[i] == ' ' || inst[i] == '\t')  //sub
+                {
+                    ++i;
+                    m = 0;
+                    getReg3Add(inst, i);
+                    if(isImm)
+                        reg[rd] = reg[rs1] - imm;
+                    else
+                        reg[rd] = reg[rs1] - reg[rs2];
+                }
+
+                else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //subu
+                {
+                    i = i + 2;
+                    m = 1;
+                    getReg3Add(inst, i);
+                    if(isImm)
+                        reg[rd] = reg[rs1] - imm;
+                    else
+                        invalidInst();    //subu and rs2 are incompatible
+                }
+                else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //subh
+                {
+                    i = i + 2;
+                    m = 2;
+                    getReg3Add(inst, i);
+                    if(isImm)
+                        reg[rd] = reg[rs1] - imm;
+                    else
+                        invalidInst();    //subh and rs2 are incompatible
+                }
+
+                else{
+                    
+                    invalidInst();
+                }
+            }else {
+                
+                invalidInst();
+            }
+
+            break;
+
+
+            
+        case 'm': if(inst[i+1] == 'o')
+                {
+                    if(inst[i+2] == 'd')    //MOD
+                    {
+                        i = i + 3;
+                        if(inst[i] == ' ' || inst[i] == '\t')  //mod
+                        {
+                            ++i;
+                            m = 0;
+                            getReg3Add(inst, i);
+                            if(isImm)
+                            {
+                                if(imm == 0)
+                                {
+                                    printf("Cannot divide by a 0!\n");
+                                    invalidInst();
+                                }
+                                reg[rd] = reg[rs1] % imm;
+                            }
+                            else
+                            {
+                                if(reg[rs2] == 0)
+                                {
+                                    printf("Cannot divide by a 0!\n");
+                                    invalidInst();
+                                }
+                                reg[rd] = reg[rs1] % reg[rs2];
+                            }
+                        }
+
+                        else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //modu
+                        {
+                            i = i + 2;
+                            m = 1;
+                            getReg3Add(inst, i);
+                            if(isImm)
+                            {
+                                if(imm == 0)
+                                {
+                                    printf("Cannot divide by a 0!\n");
+                                    invalidInst();
+                                }
+                                reg[rd] = reg[rs1] % imm;
+                            }
+                            else
+                                invalidInst();    //modu and rs2 are incompatible
+                        }
+
+                        else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //modh
+                        {
+                            i = i + 2;
+                            m = 2;
+                            getReg3Add(inst, i);
+                            if(isImm)
+                            {
+                                if(imm == 0)
+                                {
+                                    printf("Cannot divide by a 0!\n");
+                                    invalidInst();
+                                }
+                                reg[rd] = reg[rs1] % imm;
+                            }
+                            else
+                                invalidInst();    //modh and rs2 are incompatible
+                        }
+
+                        else
+                            invalidInst();
+                    }
+
+
+                    else if(inst[i+2] == 'v')    //MOV
+                    {
+                        i = i + 3;
+                        if(inst[i] == ' ' || inst[i] == '\t')  //mov
+                        {
+                            ++i;
+                            m = 0;
+                            getReg2Add(inst, i);
+                            if(isImm)
+                                reg[rd] = imm;
+                            else
+                                reg[rd] = reg[rs2];
+                        }
+
+                        else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //movu
+                        {
+                            i = i + 2;
+                            m = 1;
+                            getReg2Add(inst, i);
+                            if(isImm)
+                                reg[rd] = imm;
+                            else
+                                invalidInst();    //movu and rs2 are incompatible
+                        }
+
+                        else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //movh
+                        {
+                            i = i + 2;
+                            m = 2;
+                            getReg2Add(inst, i);
+                            if(isImm)
+                                reg[rd] = imm;
+                            else
+                                invalidInst();    //movh and rs2 are incompatible
+                        }
+
+                        else
+                            invalidInst();
+                    }
+
+                    else
+                        invalidInst();
+                }
+
+
+                else if(inst[i+1] == 'u' && inst[i+2] == 'l')   // MUL
+                {
+                    i = i + 3;
+                    if(inst[i] == ' ' || inst[i] == '\t')  //mul
+                    {
+                        ++i;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] * imm;
+                        else
+                            reg[rd] = reg[rs1] * reg[rs2];
+                    }
+
+                    else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //mulu
+                    {
+                        i = i + 2;
+                        m = 1;
+                        getReg3Add(inst, i);
+                        if(isImm){
+                            
+                            reg[rd] = reg[rs1] * imm;
+
+                        }
+                        else{
+                            
+                            invalidInst();    //mulu and rs2 are incompatible
+
+                        }
+                    }
+
+                    else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //mulh
+                    {
+                        i = i + 2;
+                        m = 2;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] * imm;
+                        else{
+                            
+                            invalidInst();    //mulh and rs2 are incompatible
+                        }
+                    }
+
+                    else{
+                        
+                        invalidInst();
+                    }
+                }
+
+                else{
+                    
+                    invalidInst();
+                }
+            
+                break;
+
+
+                
+                
+
+
+                
+            
+        default:
+            break;
+    }
+
+}
 
 void getReg3Add(char* inst, int i) {
     
