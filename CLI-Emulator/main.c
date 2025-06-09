@@ -872,14 +872,341 @@ void executeInstruction(void){
                 break;
 
 
+        case 'o': if(inst[i+1] == 'r')   // OR
+                {
+                    i = i + 2;
+                    if(inst[i] == ' ' || inst[i] == '\t')  //or
+                    {
+                        ++i;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] | imm;
+                        else
+                            reg[rd] = reg[rs1] | reg[rs2];
+                    }
 
-                
+                    else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //oru
+                    {
+                        i = i + 2;
+                        m = 1;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                            reg[rd] = reg[rs1] | imm;
+                        else
+                            invalidInst();    //oru and rs2 are incompatible
+                    }
+
+                    else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //orh
+                    {
+                        i = i + 2;
+                        m = 2;
+                        getReg3Add(inst, i);
+                        if(isImm){
+                            
+                            reg[rd] = reg[rs1] | imm;
+                        }
+                        else{
+                            
+                            invalidInst();    //orh and rs2 are incompatible
+                        }
+                    }
+
+                    else{
+                        
+                        invalidInst();
+                    }
+                }else {
+                    
+                    invalidInst();
+                }
+                break;
+
+
+            
+        case 'n': if(inst[i+1] == 'o')
+                {
+                    if(inst[i+2] == 't')   // NOT
+                    {
+                        i = i + 3;
+                        if(inst[i] == ' ' || inst[i] == '\t')  //not
+                        {
+                            ++i;
+                            m = 0;
+                            getReg2Add(inst, i);
+                            if(isImm)
+                                reg[rd] = ~imm;
+                            else
+                                reg[rd] = ~reg[rs2];
+                        }
+
+                        else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //notu
+                        {
+                            i = i + 2;
+                            m = 1;
+                            getReg2Add(inst, i);
+                            if(isImm){
+                                
+                                reg[rd] = ~imm;
+                            }
+                            else{
+                                
+                                invalidInst();    //notu and rs2 are incompatible
+                            }
+                        }
+
+                        else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //noth
+                        {
+                            i = i + 2;
+                            m = 2;
+                            getReg2Add(inst, i);
+                            if(isImm){
+                                reg[rd] = ~imm;
+
+                            }
+                            else{
+                                
+                                invalidInst();    //noth and rs2 are incompatible
+                            }
+                        }
+
+                        else{
+                            
+                            invalidInst();
+                        }
+                    }
+
+
+                    else if(inst[i+2] == 'p')    //NOP
+                    {
+                        // Does nothing
+                    }
+
+                    else{
+                        
+                        invalidInst();
+                    }
+                }else {
+                    
+                    invalidInst();
+                }
+                break;
+
+
+
+        case 'l': if(inst[i+1] == 's')
+                {
+                    if(inst[i+2] == 'l' && (inst[i+3] == ' ' || inst[i+3] == '\t'))    // LSL
+                    {
+                        i = i + 4;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                        {
+                            if(imm < 0)
+                            {
+                                printf("Cannot perform logical left shift by a negative number\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] << imm;
+                        }
+                        else
+                        {
+                            if(reg[rs2] < 0)
+                            {
+                                printf("Cannot perform logical left shift by a negative number\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] << reg[rs2];
+                        }
+                    }
+
+
+                    else if(inst[i+2] == 'r' && (inst[i+3] == ' ' || inst[i+3] == '\t'))  //LSR
+                    {
+                        i = i + 4;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                        {
+                            if(imm < 0)
+                            {
+                                printf("Cannot perform logical right shift by a negative number\n");
+                                invalidInst();
+                            }
+                            reg[rd] = (unsigned)reg[rs1] >> imm;
+                        }
+                        else
+                        {
+                            if(reg[rs2] < 0)
+                            {
+                                printf("Cannot perform logical right shift by a negative number\n");
+                                invalidInst();
+                            }
+                            reg[rd] = (unsigned)reg[rs1] >> reg[rs2];
+                        }
+                    }
+
+                    else{
+                        
+                        invalidInst();
+                    }
+                }
+
+
+                else if(inst[i+1] == 'd' && (inst[i+2] == ' ' || inst[i+2] == '\t'))    // LD
+                {
+                    i += 3;
+                    getLdSt(inst, i);
+                    if((reg[rs1]+imm)%4 != 0)
+                    {
+                        printf("Cannot access a memory location which is not a multiple of 4 !!!\n");
+                        invalidInst();
+                    }
+                    reg[rd] = Mem[(reg[rs1]+imm)/4];
+                }else {
+                    
+                    invalidInst();
+                }
+                break;
                 
 
+        case 'b': if(inst[i+1] == ' ' || inst[i+1] == '\t')        // B
+                {
+                    i += 2;
+                    while(inst[i] == ' ' || inst[i] == '\t')
+                        ++i;
+                    // Reading the label which b has to jump to
+                    int label_init = i;
+                    while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t'){
+                        i++;
+                    }
+                    pc = getPcForLabel(str, b+label_init, b+i) - 1;  // Subtract 1 so that after the instruction, when pc is incremented with pc++ we will reach the correct instruction
+                }
+
+
+                else if(inst[i+1] == 'e' && inst[i+2] == 'q' && (inst[i+3] == ' ' || inst[i+3] == '\t'))        //BEQ
+                {
+                    if(flags[0])
+                    {
+                        i += 4;
+                        while(inst[i] == ' ' || inst[i] == '\t'){
+                            i++;
+                        }
+                        // Reading the label which beq has to jump to
+                        int label_init = i;
+                        while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t'){
+                            i++;
+                        }
+                        pc = getPcForLabel(str, b+label_init, b+i) - 1;  // Subtract 1 so that after the instruction, when pc is incremented with pc++ we will reach the correct instruction
+                    }
+                }
+
+
+                else if(inst[i+1] == 'g' && inst[i+2] == 't' && (inst[i+3] == ' ' || inst[i+3] == '\t'))        //BGT
+                {
+                    if(flags[1])
+                    {
+                        i += 4;
+                        while(inst[i] == ' ' || inst[i] == '\t'){
+                            i++;
+                        }
+                        // Reading the label which bgt has to jump to
+                        int label_init = i;
+                        while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t'){
+                            i++;
+                        }
+                        pc = getPcForLabel(str, b+label_init, b+i) - 1;  // Subtract 1 so that after the instruction, when pc is incremented with pc++ we will reach the correct instruction
+                    }
+                }else {
+                    
+                    invalidInst();
+                }
+                break;
+
+
+        case 'r': if(inst[i+1] == 'e' && inst[i+2] == 't')         //RET
+                    pc = reg[15]/4 - 1;        // setting pc to ra/4 [we divide by 4 because pc is 1/4 of program counter], but subtracted by 1 to come to the right instruction after pc++
+                
+                else{
+                    
+                    invalidInst();
+                }
+
+                break;
+
+
+
+        case '.': if(inst[i+1] == 'p' && inst[i+2] == 'r' && inst[i+3] == 'i' && inst[i+4] == 'n' && inst[i+5] == 't' && (inst[i+6] == ' ' || inst[i+6] == '\t'))    // .print
+                {
+                    i += 7;
+                    // This loop will print all the registers that are to be printed
+                    while(1)
+                    {
+                        // Here rd will be used to denote the register to be printed
+                        while(inst[i] == ' ' || inst[i] == '\t'){
+                            i++;
+                        }
+                        if(inst[i] == 's' && inst[i+1] == 'p')
+                        {
+                            rd = 14;
+                            i += 2;
+                        }
+                        else
+                        {
+                            if(inst[i] != 'r'){
+                                invalidInst();
+
+                            }
+                            ++i;
+                            if(inst[i] == 'a')
+                            {
+                                rd = 15;
+                                ++i;
+                            }
+                            else if(isdigit(inst[i]))
+                            {
+                                rd = inst[i] - '0';
+                                ++i;
+                                if(isdigit(inst[i]))
+                                {
+                                    rd = rd*10 + (inst[i] - '0');
+                                    ++i;
+                                }
+                            }
+                            else{
+                                
+                                invalidInst();
+                            }
+                        }
+                        if(rd < 0 || rd > 15){
+                            invalidInst();
+
+                        }
+                        printf("r%-2d: %d\n",rd, reg[rd]);
+                        while(inst[i] == ' ' || inst[i] == '\t'){
+                            i++;
+                        }
+                        if(inst[i] != ','){
+                            break;
+                        }
+                        ++i;
+                    }
+                }
+            
+                else if (inst[i+1] == 'e' && inst[i+2] == 'n' && inst[i+3] == 'c' && inst[i+4] == 'o' && inst[i+5] == 'd' && inst[i+6] == 'e' && (inst[i+7] == ' ' || inst[i+7] == '\t'))
+                {    // .encode
+                    
+                    
+                }else {
+                    
+                    invalidInst();
+                }
+                break;
 
                 
             
-        default:
+        default:invalidInst();
             break;
     }
 
