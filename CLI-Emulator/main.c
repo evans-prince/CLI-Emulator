@@ -668,6 +668,211 @@ void executeInstruction(void){
                 break;
 
 
+        case 'd': if(inst[i+1] == 'i' && inst[i+2] == 'v')   // DIV
+                {
+                    i = i + 3;
+                    if(inst[i] == ' ' || inst[i] == '\t')  //div
+                    {
+                        ++i;
+                        m = 0;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                        {
+                            if(imm == 0)
+                            {
+                                printf("Cannot divide by a 0!\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] / imm;
+                        }
+                        else
+                        {
+                            if(reg[rs2] == 0)
+                            {
+                                printf("Cannot divide by 0!\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] / reg[rs2];
+                        }
+                    }
+
+                    else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //divu
+                    {
+                        i = i + 2;
+                        m = 1;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                        {
+                            if(imm == 0)
+                            {
+                                printf("Cannot divide by 0!\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] / imm;
+                        }
+                        else
+                            invalidInst();    //divu and rs2 are incompatible
+                    }
+
+                    else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //divh
+                    {
+                        i = i + 2;
+                        m = 2;
+                        getReg3Add(inst, i);
+                        if(isImm)
+                        {
+                            if(imm == 0)
+                            {
+                                printf("Cannot divide by 0!\n");
+                                invalidInst();
+                            }
+                            reg[rd] = reg[rs1] / imm;
+                        }
+                        else{
+                            
+                            invalidInst();    //divh and rs2 are incompatible
+                        }
+                    }
+
+                    else{
+                        
+                        invalidInst();
+
+                    }
+                } else {
+                    
+                    invalidInst();
+                }
+            
+                break;
+
+            
+
+            
+        case 'c': if(inst[i+1] == 'm' && inst[i+2] == 'p')        // CMP (I am reading cmp as cmp rd, rs2/imm for the sake of convenience though it should be cmp rs1, rs2/imm)
+                {
+                    i = i + 3;
+                    if(inst[i] == ' ' || inst[i] == '\t')  //cmp
+                    {
+                        ++i;
+                        m = 0;
+                        getReg2Add(inst, i);
+                        if(isImm)
+                        {
+                            if(reg[rd] == imm)
+                            {
+                                flags[0] = 1;
+                                flags[1] = 0;
+                            }
+                            else if(reg[rd] > imm)
+                            {
+                                flags[1] = 1;
+                                flags[0] = 0;
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                            }
+                        }
+                        else
+                        {
+                            if(reg[rd] == reg[rs2])
+                            {
+                                flags[0] = 1;
+                                flags[1] = 0;
+                            }
+                            else if(reg[rd] > reg[rs2])
+                            {
+                                flags[1] = 1;
+                                flags[0] = 0;
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                            }
+                        }
+                    }
+
+                    else if(inst[i] == 'u' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //cmpu
+                    {
+                        i = i + 2;
+                        m = 1;
+                        getReg2Add(inst, i);
+                        if(isImm)
+                        {
+                            if(reg[rd] == imm)
+                            {
+                                flags[0] = 1;
+                                flags[1] = 0;
+                            }
+                            else if(reg[rd] > imm)
+                            {
+                                flags[1] = 1;
+                                flags[0] = 0;
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                            }
+                        }
+                        else
+                            invalidInst();    //cmpu and rs2 are incompatible
+                    }
+
+                    else if(inst[i] == 'h' && (inst[i+1] == ' ' || inst[i+1] == '\t'))  //cmph
+                    {
+                        i = i + 2;
+                        m = 2;
+                        getReg2Add(inst, i);
+                        if(isImm)
+                        {
+                            if(reg[rd] == imm)
+                            {
+                                flags[0] = 1;
+                                flags[1] = 0;
+                            }
+                            else if(reg[rd] > imm)
+                            {
+                                flags[1] = 1;
+                                flags[0] = 0;
+                            }
+                            else
+                            {
+                                flags[0] = 0;
+                                flags[1] = 0;
+                            }
+                        }
+                        else
+                            invalidInst();    //cmph and rs2 are incompatible
+                    }
+
+                    else
+                        invalidInst();
+                }
+
+
+                else if(inst[i+1] == 'a' && inst[i+2] == 'l' && inst[i+3] == 'l' && (inst[i+4] == ' ' || inst[i+4] == '\t'))    // CALL
+                {
+                    i += 5;
+                    while(inst[i] == ' ' || inst[i] == '\t')
+                        ++i;
+                    // Reading the label which call has to jump to
+                    int label_init = i;
+                    while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t')
+                        ++i;
+                    reg[15] = (4*pc) + 4;        // assigning the return address register ra to program counter[4*pc] + 4
+                    pc = getPcForLabel(str, b+label_init, b+i) - 1;  // Subtract 1 so that after the instruction, when pc is incremented with pc++ we will reach the correct instruction
+                } else {
+                    
+                    invalidInst();
+                }
+                break;
+
+
+
                 
                 
 
