@@ -1194,11 +1194,368 @@ void executeInstruction(void){
                     }
                 }
             
-                else if (inst[i+1] == 'e' && inst[i+2] == 'n' && inst[i+3] == 'c' && inst[i+4] == 'o' && inst[i+5] == 'd' && inst[i+6] == 'e' && (inst[i+7] == ' ' || inst[i+7] == '\t'))
-                {    // .encode
-                    
-                    
-                }else {
+                else if (inst[i+1] == 'e' && inst[i+2] == 'n' && inst[i+3] == 'c' && inst[i+4] == 'o' && inst[i+5] == 'd' && inst[i+6] == 'e' && (inst[i+7] == ' ' || inst[i+7] == '\t'))   // .encode
+                {
+                    i += 8;
+                    while(inst[i] == ' ' || inst[i] == '\t'){
+                        i++;
+                    }
+                    encodedInst = 0;
+                    int q = i;
+                    if(strncmp(&inst[i],"add",3) == 0)    // opcode 00000
+                    {
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"sub",3) == 0)    // opcode 00001
+                    {
+                        encodedInst += (1<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding the modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding the modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"mul",3) == 0)    // opcode 00010
+                    {
+                        encodedInst += (2<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"div",3) == 0)    // opcode 00011
+                    {
+                        encodedInst += (3<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"mod",3) == 0)    // opcode 00100
+                    {
+                        encodedInst += (4<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"cmp",3) == 0)    // opcode 00101
+                    {
+                        encodedInst += (5<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg2Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<18) + imm;    //adding the immediate bit & rs1 bit and the immediate
+                        else
+                            encodedInst += (rd<<18) + (rs2<<14);        //adding the immediate bit, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"and",3) == 0)    // opcode 00110
+                    {
+                        encodedInst += (6<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"or",2) == 0)    // opcode 00111
+                    {
+                        encodedInst += (7<<27);            // adding the opcode
+                        if(inst[i+2] == 'u' && (inst[i+3] == ' ' || inst[i+3] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+2] == 'h' && (inst[i+3] == ' ' || inst[i+3] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+2] != ' ' && inst[i+2] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 3;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"not",3) == 0)    // opcode 01000
+                    {
+                        encodedInst += (8<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg2Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + imm;    //adding the immediate bit, rd bit and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs2<<14);        //adding the immediate bit, rd & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"mov",3) == 0)    // opcode 01001
+                    {
+                        encodedInst += (9<<27);            // adding the opcode
+                        if(inst[i+3] == 'u' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<16);        // adding for modifier bit
+                        else if(inst[i+3] == 'h' && (inst[i+4] == ' ' || inst[i+4] == '\t'))
+                            encodedInst += (1<<17);        // adding for modifier bit
+                        else if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg2Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + imm;    //adding the immediate bit, rd bit and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs2<<14);        //adding the immediate bit, rd & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"lsl",3) == 0)    // opcode 01010
+                    {
+                        encodedInst += (10<<27);            // adding the opcode
+                        if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"lsr",3) == 0)    // opcode 01011
+                    {
+                        encodedInst += (11<<27);            // adding the opcode
+                        if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"asr",3) == 0)    // opcode 01100
+                    {
+                        encodedInst += (12<<27);            // adding the opcode
+                        if(inst[i+3] != ' ' && inst[i+3] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 4;
+                        getReg3Add(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        if(isImm)
+                            encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                        else
+                            encodedInst += (rd<<22) + (rs1<<18) + (rs2<<14);        //adding the immediate bit, rd, rs1 & rs2 bits
+                    }
+                    else if(strncmp(&inst[i],"nop",3) == 0)    // opcode 01101
+                        encodedInst += (13<<27);            // adding the opcode
+                    else if(strncmp(&inst[i],"ld",2) == 0)    // opcode 01110
+                    {
+                        encodedInst += (14<<27);            // adding the opcode
+                        if(inst[i+2] != ' ' && inst[i+2] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 3;
+                        getLdSt(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                    }
+                    else if(strncmp(&inst[i],"st",2) == 0)    // opcode 01111
+                    {
+                        encodedInst += (15<<27);            // adding the opcode
+                        if(inst[i+2] != ' ' && inst[i+2] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 3;
+                        getLdSt(inst,i);
+                        if(imm < 0)
+                            imm += (1<<16);
+                        encodedInst += (1<<26) + (rd<<22) + (rs1<<18) + imm;    //adding the immediate bit, rd & rs1 bits and the immediate
+                    }
+                    else if(inst[i] == 'b')
+                    {
+                        if(inst[i+1] == ' ' || inst[i+1] == '\t')    // opcode 10010
+                        {
+                            encodedInst += (18<<27);            // adding the opcode
+                            i += 2;
+                        }
+                        else if(strncmp(&inst[i+1],"eq",2) == 0 && (inst[i+3] == ' ' || inst[i+3] == '\t'))    // opcode 10000
+                        {
+                            encodedInst += (16<<27);
+                            i += 4;
+                        }
+                        else if(strncmp(&inst[i+1],"gt",2) == 0 && (inst[i+3] == ' ' || inst[i+3] == '\t'))    // opcode 10001
+                        {
+                            encodedInst += (17<<27);
+                            i += 4;
+                        }
+                        else
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        while(inst[i] == ' ' || inst[i] == '\t')
+                            ++i;
+                        // Reading the label which the branch has to jump to
+                        int label_init = i;
+                        while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t')
+                            ++i;
+                        int offset = getPcForLabel(str, b+label_init, b+i) - pc;
+                        if(offset < 0)
+                            offset += (1<<27);
+                        encodedInst += offset;
+                    }
+                    else if(strncmp(&inst[i],"call",4) == 0)    // opcode 10011
+                    {
+                        encodedInst += (19<<27);            // adding the opcode
+                        if(inst[i+4] != ' ' && inst[i+4] != '\t')
+                        {
+                            printf("Invalid instruction for encoding!\n");
+                            invalidInst();
+                        }
+                        i += 5;
+                        while(inst[i] == ' ' || inst[i] == '\t')
+                            ++i;
+                        // Reading the label which the call has to jump to
+                        int label_init = i;
+                        while(inst[i] != '\0' && inst[i] != ' ' && inst[i] != '\t')
+                            ++i;
+                        int offset = getPcForLabel(str, b+label_init, b+i) - pc;
+                        if(offset < 0)
+                            offset += (1<<27);
+                        encodedInst += offset;
+                    }
+                    else if(strncmp(&inst[i],"ret",3) == 0)    // opcode 10100
+                        encodedInst += (20<<27);            // adding the opcode
+                    else
+                    {
+                        printf("Invalid instruction for encoding!\n");
+                        invalidInst();
+                    }
+                    printf("%s: %#010x\n",&inst[q],encodedInst);
+                }
+            
+                else {
                     
                     invalidInst();
                 }
