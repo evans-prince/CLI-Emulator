@@ -1,0 +1,85 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{array}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+
+\title{\textbf{CLI - Emulator}}
+\author{Prince Evans }
+\date{}
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+\texttt{CLI - Emulator} (Command Line - Emulator) is a C program which reads a SimpleRisc assembly language file and executes its instructions to produce the desired output.
+
+\section*{Features of the Interpreter}
+\begin{itemize}[leftmargin=*]
+  \item Supports all 21 SimpleRisc instructions including modifiers \textbf{u} and \textbf{h}.
+  
+  \item The assemble language program can have a \textbf{free form}. An instruction has to be in one
+line but there can be any number of spaces or tabs between the fields and before the
+instruction. There can also be any number of empty lines between statements.
+
+  \item The program specifies any errors in the assembly file and \textbf{also mentions the line
+number} where the error is present.
+
+  \item The assembly file can have any number of labels and a label can either be on the same
+line as the instruction it points to, or it can be anywhere after the previous instruction.
+
+  \item The program must contain a \textbf{.main} label from where the program execution starts.
+  
+  \item The stack pointer, \textbf{r14}, can be accessed as sp and the return address register, \textbf{r15}, can be
+accessed as ra.
+
+  \item 16-bit immediates (in either decimal or hex) are supported and can have the form \texttt{21, -53,
+0xAB12, 0x a25 or 0x  5     A 4    C.}
+
+  \item It supports a 32-bit memory system. However, only the bottom 4096 entries are allowed
+to be used. The interpreter allows only memory addresses that are multiples of 4 between
+0 and 4095 to be accessed using the ld and st instructions.
+
+  \item The stack pointer is initially automatically initialized to 0xFFC, i.e. 4092 (the upper end
+of the memory) and hence the program need not initialize the stack pointer.
+
+  \item Supports single-line (\textbf{@}) and multi-line (\texttt{/*...*/}) comments.
+  
+  \item Includes two macros: \texttt{.print} and \texttt{.encode}.
+\end{itemize}
+
+\section*{The \texttt{.print} Macro}
+
+Used to print decimal values of registers to console.  
+Example:
+\begin{lstlisting}[language={},basicstyle=\ttfamily]
+.print r0, r2, r11, r9, sp, ra, r6
+\end{lstlisting}
+
+\section*{The \texttt{.encode} Macro}
+Used to print the 32-bit encoding of a SimpleRisc instruction.  
+Example:
+\begin{lstlisting}[language={},basicstyle=\ttfamily]
+.encode addh r15, sp, 0x135
+\end{lstlisting}
+This prints the encoding \texttt{0x07fa0135}, without executing the instruction.
+
+\section*{How to Use the Interpreter}
+\begin{itemize}[leftmargin=*]
+  \item Compile \texttt{main.c} (use \texttt{make} if a Makefile is provided).
+  \item Run using:
+  \begin{itemize}
+    \item \texttt{./<executable> <assembly-file>} (Linux)
+    \item \texttt{<executable> <assembly-file>} (Windows)
+    \item \texttt{./run.sh <assembly-file>} (if Makefile is used)
+  \end{itemize}
+\end{itemize}
+
+
+\end{document}
