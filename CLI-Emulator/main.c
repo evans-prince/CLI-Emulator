@@ -2381,4 +2381,173 @@ void invalidInst(void)
     exit(0);    // EXIT the interpreter
 }
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+
+// ---- WASM entry points -------------------------------------------------
+// Everything below exists only for the browser build (guarded by
+// __EMSCRIPTEN__, so it never affects the native Xcode/Makefile build
+// above). It reuses the exact same globals and functions as main() --
+// executeInstruction(), invalidInst(), setPcForMain(), etc. -- the only
+// thing that changes is where the program text comes from: a JS string
+// instead of a file opened with argv[1].
+
+// Mirrors the file-reading loop at the top of main() (strips carriage
+// returns and /* */ comments) but reads from an in-memory string instead
+// of calling fgetc() on a FILE*.
+static void wasm_load_source(const char* source) {
+    long len = (long)strlen(source);
+    str = malloc(len + 2);
+    int colon_count = 0;
+    int line_count = 0;
+    int i = 0;
+    long p = 0;
+    int x = (p < len) ? (unsigned char)source[p++] : EOF;
+    while (x != EOF) {
+        if (x != 13) {
+            if (x == '/') {
+                x = (p < len) ? (unsigned char)source[p++] : EOF;
+                if (x == '*') {
+                    while (1) {
+                        x = (p < len) ? (unsigned char)source[p++] : EOF;
+                        if (x == EOF) {
+                            printf("Error: Unterminated Comment!\n");
+                            exit(0);
+                        } else if (x == '*') {
+                            x = (p < len) ? (unsigned char)source[p++] : EOF;
+                            if (x == '/') {
+                                x = (p < len) ? (unsigned char)source[p++] : EOF;
+                                break;
+                            }
+                        }
+                    }
+                } else if (x == EOF) {
+                    str[i++] = '/';
+                    break;
+                } else {
+                    str[i++] = '/';
+                }
+            }
+            if (x == EOF) break;
+            str[i++] = (char)x;
+            if (x == '\n') line_count++;
+            else if (x == ':') colon_count++;
+        }
+        x = (p < len) ? (unsigned char)source[p++] : EOF;
+    }
+    str[i++] = '\n';
+    str[i] = '\0';
+
+    instructions = malloc((line_count > 0 ? line_count : 1) * sizeof(struct instruction));
+    labels = malloc((colon_count > 0 ? colon_count : 1) * sizeof(struct label));
+}
+
+// Runs a whole SimpleRISC program given as a string. This is a straight
+// port of main()'s body below the file-reading step (see main() above for
+// the original): the parsing loop that builds instructions[]/labels[],
+// then the fetch-execute loop.
+EMSCRIPTEN_KEEPALIVE
+void run_program(const char* source) {
+    // Reset all global state so each call starts from a clean machine --
+    // a real CLI process would exit and lose all this between runs, but
+    // here the WASM instance stays alive across calls from JS.
+    if (str) { free(str); str = NULL; }
+    if (instructions) { free(instructions); instructions = NULL; }
+    if (labels) { free(labels); labels = NULL; }
+    memset(reg, 0, sizeof(reg));
+    memset(flags, 0, sizeof(flags));
+    memset(Mem, 0, sizeof(Mem));
+    k = 1;
+
+    wasm_load_source(source);
+
+    // Skipping empty lines
+    int x = 0;
+    while (str[x] == '\n') {
+        x++;
+        k++;
+    }
+    int i = x;
+
+    int j, t;
+    pc = 0;
+    lab_no = 0;
+    while (str[x] != '\0') {
+        if (str[x] == ':') {
+            t = x--;
+            while (str[x] != ' ' && str[x] != '\t' && str[x] != '\n') {
+                x--;
+                if (x < 0) break;
+            }
+            labels[lab_no].i = x + 1;
+            labels[lab_no].j = t;
+            j = x;
+            x = t + 1;
+            while (str[x] == ' ' || str[x] == '\t') {
+                ++x;
+            }
+            if (str[x] == '\n') {
+                while (j > 0) {
+                    if (str[j] != ' ' && str[j] != '\t') break;
+                    --j;
+                }
+                if (str[j] == '\n' || j == -1)
+                    labels[lab_no++].inst_no = pc;
+                else {
+                    labels[lab_no++].inst_no = pc + 1;
+                    instructions[pc].i = i;
+                    instructions[pc].j = j + 1;
+                    instructions[pc].line = k;
+                    pc++;
+                }
+            } else {
+                labels[lab_no++].inst_no = pc;
+                instructions[pc].i = x;
+                while (str[x] != '\n') x++;
+                instructions[pc].j = x;
+                instructions[pc].line = k;
+                pc++;
+            }
+            while (str[x] == '\n') {
+                x++;
+                k++;
+            }
+            i = x;
+        } else if (str[x] == '\n') {
+            j = x;
+            instructions[pc].i = i;
+            instructions[pc].j = j;
+            instructions[pc].line = k;
+            pc++;
+            while (str[x] == '\n') {
+                x++;
+                k++;
+            }
+            i = x;
+        } else {
+            x++;
+        }
+    }
+    int inst_count = pc;
+    lab_count = lab_no;
+    setPcForMain();
+    reg[14] = 4092;
+    while (pc < inst_count) {
+        k = instructions[pc].line;
+        executeInstruction();
+        pc++;
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
+int get_reg(int i) { return (i >= 0 && i < 16) ? reg[i] : 0; }
+
+EMSCRIPTEN_KEEPALIVE
+int get_flag(int i) { return (i >= 0 && i < 2) ? flags[i] : 0; }
+
+// addr is a byte address, same convention LD/ST use (must be a multiple of 4).
+EMSCRIPTEN_KEEPALIVE
+int get_mem(int addr) { return (addr >= 0 && addr < 4096) ? Mem[addr / 4] : 0; }
+
+#endif
 
