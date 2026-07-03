@@ -25,8 +25,10 @@ where you want to use `emcc`.
 From the repo root (`CLI-Emulator/`):
 
 ```bash
+mkdir -p docs/pkg
 emcc CLI-Emulator/main.c -O2 \
   -s MODULARIZE=1 \
+  -s EXPORT_ES6=1 \
   -s EXPORT_NAME=createInterpreterModule \
   -s EXPORTED_FUNCTIONS=_run_program,_get_reg,_get_flag,_get_mem \
   -s EXPORTED_RUNTIME_METHODS=ccall,cwrap \
@@ -39,6 +41,10 @@ emcc CLI-Emulator/main.c -O2 \
 What the flags mean:
 - `MODULARIZE=1` / `EXPORT_NAME=...`: wraps the output in a factory function
   (`createInterpreterModule()`) instead of dumping globals onto `window`.
+- `EXPORT_ES6=1`: **important** -- without this, `MODULARIZE=1` alone
+  produces a CommonJS-style file, not a real ES module. `app.js` uses
+  `import createInterpreterModule from "./pkg/interpreter.js"`, which
+  requires an actual `export default` -- only `EXPORT_ES6=1` generates that.
 - `EXPORTED_FUNCTIONS`: the C functions we actually want callable from JS
   (note the leading underscore -- that's just Emscripten's C-symbol naming).
 - `EXPORTED_RUNTIME_METHODS=ccall,cwrap`: exposes the helpers `app.js` uses
@@ -71,6 +77,8 @@ Paste me the exact error. Common ones:
   in this terminal session.
 - Errors mentioning `argv`/`main` -- almost certainly means `INVOKE_RUN=0`
   got dropped from the command.
+- Browser console says `does not provide an export named 'default'` --
+  `EXPORT_ES6=1` got dropped from the command.
 
 ## Deploying
 
