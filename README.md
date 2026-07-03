@@ -65,6 +65,11 @@ make
 
 ---
 
+### LIVE DEMO
+
+https://evans-prince.github.io/CLI-Emulator/
+
+---
 ### 📌 Notes
 
 * Supports signed and unsigned immediates.
