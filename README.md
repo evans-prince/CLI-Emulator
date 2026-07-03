@@ -67,6 +67,8 @@ make
 
 ### LIVE DEMO
 
+
+![CLI-Emulator live demo](cli-emulator-demo.gif)
 https://evans-prince.github.io/CLI-Emulator/
 
 ---
